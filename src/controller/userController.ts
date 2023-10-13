@@ -8,6 +8,7 @@ import EmailService from "../helpers/sendEmail";
 import dotenv from "dotenv";
 import { Movies, MoviePrices, Theatres } from "../model/theatreModel";
 import { toCharCode } from "pdf-lib";
+import { string } from "@hapi/joi";
 dotenv.config();
 
 class UserController {
@@ -91,7 +92,7 @@ class UserController {
             const existingMovie = await SuperAdminMethods.findWithPk(Movies, bookingData.movieId);
             if (!existingMovie) return res.send({ message: "No Movie available" });
 
-            const existingBooking = await SuperAdminMethods.findOne(Booking,userId)
+            const existingBooking = await SuperAdminMethods.findOne(Booking, userId)
             console.log(existingBooking)
             const bookingLimit = await SuperAdminMethods.findOne(Theatres, existingMovie.theatreId)
             if ((existingBooking) && existingBooking.totalTicket >= bookingLimit.bookingLimit) {
@@ -186,9 +187,9 @@ class UserController {
             if (err.length > 0) {
                 return res.send({ message: "Booking Error", err })
             } else {
-                const updatedSeats = await SuperAdminMethods.findWithPk(Movies,bookingData.movieId);
+                const updatedSeats = await SuperAdminMethods.findWithPk(Movies, bookingData.movieId);
                 if (updatedSeats) {
-                    const updatedData = await SuperAdminMethods.update(Movies,ticketData,{"id":bookingData.movieId});
+                    const updatedData = await SuperAdminMethods.update(Movies, ticketData, { "id": bookingData.movieId });
 
                     await Movies.update({ availableSeats: (updatedSeats.availableSeats - totalTicket) }, { where: { id: bookingData.movieId } })
                 }
@@ -199,10 +200,10 @@ class UserController {
                 movieId: req.body.movieId,
                 tickets: req.body.tickets,
                 price: price,
-                totalTicket:totalTicket
+                totalTicket: totalTicket
             }
-            
-            const booked = await SuperAdminMethods.createUser(Booking,updatedBookingData)
+
+            const booked = await SuperAdminMethods.createUser(Booking, updatedBookingData)
             await generateAndSaveInvoice(bookingData, eachTicketPrice, price)
                 .then((filepath) => {
                     console.log(`Invoice saved as: ${filepath}`);
@@ -219,7 +220,55 @@ class UserController {
 
 
     }
-}
 
+
+    async cancellation(req: Request, res: Response) {
+        try {
+            const bookingId = req.params.id;
+            console.log(bookingId)
+            const userId = (req as any).userId;
+            const userEmail = (req as any).userEmail;
+
+            let ticketData: { [ticketType: string]: number } = {};
+
+            const booking = await SuperAdminMethods.findWithPk(Booking, bookingId);
+            if (!booking) {
+                return res.status(404).send({ message: "Booking not found" });
+            }
+
+            const movieId = booking.movieId;
+            const movie = await SuperAdminMethods.findWithPk(Movies, movieId);
+            if (movie) {
+                console.log(">>", booking.tickets)
+                for (const data of booking.tickets) {
+                    const ticketType = Object.keys(data)[0];
+                    const quantity = data[ticketType];
+                    console.log(ticketType, quantity)
+                    if (ticketType == 'budgetClass'){
+                        ticketData["budgetClassCapacity"] = Number(quantity) + movie.budgetClassCapacity
+                    }
+                    if (ticketType == 'executiveClass'){
+                        ticketData["executiveClassCapacity"] = Number(quantity) + movie.executiveClassCapacity
+                    }
+                    if (ticketType == 'firstClass'){
+                        ticketData["firstClassCapacity"] = Number(quantity) + movie.firstClassCapacity
+                    }
+                }
+                const totalTicket = booking.totalTicket;
+                console.log(ticketData)
+                await SuperAdminMethods.update(Movies,ticketData,{ id: movieId })
+                await SuperAdminMethods.update(Movies,{availableSeats:(movie.availableSeats + booking.totalTicket)},{ id: movieId })
+            }
+
+            await SuperAdminMethods.deleteWithPk(Booking, { id: bookingId });
+            await EmailService.sendMail(userEmail, `Booking Cancellation Details`, `Tickets have been canceled for your booking`);
+
+            return res.send({ message: `Booking with ID ${bookingId} has been canceled successfully` });
+        } catch (err) {
+            console.error(err);
+            return res.status(500).send({ message: "Cancellation Error", err });
+        }
+    }
+}
 
 export default new UserController

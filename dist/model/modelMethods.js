@@ -15,9 +15,6 @@ class SuperAdminMethods {
             return yield model.findAll(data);
         });
     }
-    /* async getAllWithSpecific(model:any,data?:any){
-        return await model.findAll({where:data});
-    } */
     createUser(model, user) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield model.create(user);
@@ -38,13 +35,14 @@ class SuperAdminMethods {
             return yield model.update(updateData, { where: whereCondition, limit });
         });
     }
-    /* async updateWithLimit(model: any, updateData: any, whereCondition: any,limit:number) {
-        const rowsUpdated = await model.update(updateData, { where: whereCondition, limit })
-        return rowsUpdated
-    } */
     count(model, whereCondition) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield model.count({ where: whereCondition });
+        });
+    }
+    deleteWithPk(model, whereCondition) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield model.destroy({ where: whereCondition });
         });
     }
 }

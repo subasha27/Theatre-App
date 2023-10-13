@@ -17,7 +17,7 @@ app.use("/api", superAdmin_1.default);
 app.use("/api/", owner_1.default);
 app.use("/api", user_1.default);
 db_1.default.sync();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 9090;
 app.listen(PORT, () => {
     console.log(`Server is Running on ${PORT}`);
 });

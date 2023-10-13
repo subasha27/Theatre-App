@@ -236,5 +236,50 @@ class UserController {
             }
         });
     }
+    cancellation(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const bookingId = req.params.id;
+                console.log(bookingId);
+                const userId = req.userId;
+                const userEmail = req.userEmail;
+                let ticketData = {};
+                const booking = yield modelMethods_1.default.findWithPk(userModel_1.Booking, bookingId);
+                if (!booking) {
+                    return res.status(404).send({ message: "Booking not found" });
+                }
+                const movieId = booking.movieId;
+                const movie = yield modelMethods_1.default.findWithPk(theatreModel_1.Movies, movieId);
+                if (movie) {
+                    console.log(">>", booking.tickets);
+                    for (const data of booking.tickets) {
+                        const ticketType = Object.keys(data)[0];
+                        const quantity = data[ticketType];
+                        console.log(ticketType, quantity);
+                        if (ticketType == 'budgetClass') {
+                            ticketData["budgetClassCapacity"] = Number(quantity) + movie.budgetClassCapacity;
+                        }
+                        if (ticketType == 'executiveClass') {
+                            ticketData["executiveClassCapacity"] = Number(quantity) + movie.executiveClassCapacity;
+                        }
+                        if (ticketType == 'firstClass') {
+                            ticketData["firstClassCapacity"] = Number(quantity) + movie.firstClassCapacity;
+                        }
+                    }
+                    const totalTicket = booking.totalTicket;
+                    console.log(ticketData);
+                    yield modelMethods_1.default.update(theatreModel_1.Movies, ticketData, { id: movieId });
+                    yield modelMethods_1.default.update(theatreModel_1.Movies, { availableSeats: (movie.availableSeats + booking.totalTicket) }, { id: movieId });
+                }
+                yield modelMethods_1.default.deleteWithPk(userModel_1.Booking, { id: bookingId });
+                yield sendEmail_1.default.sendMail(userEmail, `Booking Cancellation Details`, `Tickets have been canceled for your booking`);
+                return res.send({ message: `Booking with ID ${bookingId} has been canceled successfully` });
+            }
+            catch (err) {
+                console.error(err);
+                return res.status(500).send({ message: "Cancellation Error", err });
+            }
+        });
+    }
 }
 exports.default = new UserController;

@@ -2,6 +2,7 @@ import express from "express";
 import { validateSchema,schema } from "../middleware/schemaValidation";
 import UserController from "../controller/userController";
 import authenticateUser from "../middleware/userAuth";
+import userController from "../controller/userController";
 const router = express.Router();
 
 //user login 
@@ -12,6 +13,8 @@ router.get("/Theatre",authenticateUser,validateSchema(schema.theatreLocationSche
 
 router.get("/MovieList",authenticateUser,validateSchema(schema.movieListSchema),UserController.getList);
 router.post("/Booking",validateSchema(schema.bookingDataSchema),authenticateUser,UserController.booking);
+
+router.post("/Cancelling/:id",authenticateUser,userController.cancellation);
 
 
 

@@ -16,7 +16,7 @@ app.use("/api",userRoute);
 
 sequelize.sync();
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 9090;
 app.listen(PORT, () => {
     console.log(`Server is Running on ${PORT}`)
 })

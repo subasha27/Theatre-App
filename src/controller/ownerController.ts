@@ -78,7 +78,7 @@ class OwnerCon {
 
     async createMovie(req: Request, res: Response) {
         try {
-            let screenCount;
+            let screenCount = 0;
             const handlerId = (req as any).owner
             const screenData = {
                 theatreId: handlerId,
@@ -86,7 +86,7 @@ class OwnerCon {
                 screenName: req.body.screenName,
                 movie: req.body.movie,
                 date: new Date(req.body.date),
-                totalSession: req.body.totalSession,
+                session: new Date(req.body.session),
                 totalSeats: req.body.totalSeats,
                 availableSeats: req.body.totalSeats,
                 budgetClassCapacity: req.body.totalSeats * 0.15,
@@ -104,28 +104,48 @@ class OwnerCon {
             if (providedDate < sevenDays) {
                 return res.status(400).send({ message: "Schedule for the week should be defined prior a Week" });
             }
-            console.log(providedDate, ".......", sevenDays)
 
             const theatreData = await SuperAdminMethods.findOne(Theatres, { "theatreName": screenData.theatreName });
             if (!theatreData) return res.status(404).send({ message: "Theatre does not Exists" });
 
             const dateCount = await SuperAdminMethods.count(Movies, { "date": new Date(screenData.date) });
+            if (dateCount == 0 || dateCount < (theatreData.totalScreen * theatreData.totalSession)) {
+
+                const existingData = await SuperAdminMethods.findOne(Movies, { "screenName": screenData.screenName,"session":screenData.session });
+                const sessionCount = await SuperAdminMethods.count(Movies, { "date": screenData.session });
 
 
-            if (dateCount == 0 || dateCount < theatreData.totalScreen) {
-                const existingData = await SuperAdminMethods.findOne(Movies, { "screenName": screenData.screenName });
                 if (existingData) {
-                    if (existingData.screenName == screenData.screenName) {
-                        if ((new Date(existingData.date).getTime()) === (screenData.date).getTime()) {
-                            return res.status(404).send({ message: `The screen is already defined for this day : ${screenData.date}` });
+                    console.log(existingData)
+                    if ((existingData.screenName == screenData.screenName) &&
+                        (((new Date(existingData.date)).getTime()) == (new Date(screenData.date)).getTime()) &&
+                        ((screenData.session).getTime() == (existingData.session).getTime())) {
+                        console.log(String(screenData.session), String(existingData.session))
+                        return res.status(404).send({ message: `The screen is already defined for the session : ${screenData.session}` });
+
+                    }
+                    if (existingData.screenName != screenData.screenName) { 
+                        if (sessionCount == 0 || sessionCount < theatreData.totalSession) {
+                            console.log("screenName not equal")
+                            const ScreenCreation = await SuperAdminMethods.createUser(Movies, screenData);
+                            const movieId = ScreenCreation.id
+                            const priceData = {
+                                movieId: movieId,
+                                budgetClass: req.body.budgetClass,
+                                executiveClass: req.body.executiveClass,
+                                firstClass: req.body.firstClass
+                            }
+                            await SuperAdminMethods.createUser(MoviePrices, priceData)
+                            return res.status(200).send({ message: "Screen is Defined", movieId })
+                        } else {
+                            return res.status(400).send({ message: `Maximum no of session is defined for this movie : ${screenData.screenName}` })
                         }
                     }
-                }
-                const subCount = await SuperAdminMethods.count(Movies, { "date": new Date(screenData.date) });
-                if (theatreData) screenCount = theatreData.totalScreen;
-                if (screenCount) {
-                    if (subCount == 0 || subCount < screenCount) {
-
+                    if (existingData.screenName == screenData.screenName &&
+                        (((new Date(existingData.date)).getTime()) == (new Date(screenData.date)).getTime()) &&
+                        ((screenData.session).getTime() != (existingData.session).getTime())) {
+                        console.log((screenData.session).getTime(), ".........",(existingData.session).getTime())
+                        console.log("session not equal")
                         const ScreenCreation = await SuperAdminMethods.createUser(Movies, screenData);
                         const movieId = ScreenCreation.id
                         const priceData = {
@@ -136,10 +156,22 @@ class OwnerCon {
                         }
                         await SuperAdminMethods.createUser(MoviePrices, priceData)
                         return res.status(200).send({ message: "Screen is Defined", movieId })
-                    } else {
-                        return res.status(400).send({ message: `Maximum no of screen is defined for this theatre : ${screenData.theatreName}` })
                     }
+
+
+                } else {
+                    const ScreenCreation = await SuperAdminMethods.createUser(Movies, screenData);
+                    const movieId = ScreenCreation.id
+                    const priceData = {
+                        movieId: movieId,
+                        budgetClass: req.body.budgetClass,
+                        executiveClass: req.body.executiveClass,
+                        firstClass: req.body.firstClass
+                    }
+                    await SuperAdminMethods.createUser(MoviePrices, priceData)
+                    return res.status(200).send({ message: "Screen is Defined", movieId })
                 }
+
             } else {
                 return res.status(400).send({ message: `Maximum no of screen is defined for the day : ${screenData.date}` })
             }

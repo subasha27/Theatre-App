@@ -43,14 +43,15 @@ class Schema {
     totalScreen: Joi.number().required(),
     capacity: Joi.number().required(),
     location: Joi.string().required(),
-    bookingLimit: Joi.number().required()
+    bookingLimit: Joi.number().required(),
+    totalSession: Joi.number().required()
   })
   public movieCreation = Joi.object({
     theatreName: Joi.string().required(),
     screenName: Joi.string().required(),
     movie: Joi.string().required(),
     date: Joi.date().required(),
-    totalSession: Joi.number().required(),
+    session: Joi.date().required(),
     totalSeats: Joi.number().required(),
     budgetClass: Joi.number().required(),
     executiveClass: Joi.number().required(),
@@ -67,9 +68,6 @@ class Schema {
   });
   public theatreLocationSchema = Joi.object({
     location: Joi.string().required()
-  });
-  public movieListSchema = Joi.object({
-    theatreId: Joi.number().required()
   });
   public bookingDataSchema = Joi.object({
     movieId: Joi.number().integer().required(),

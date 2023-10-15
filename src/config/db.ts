@@ -7,7 +7,7 @@ const sequelize = new Sequelize(
     'rootpass',{
         host:'localhost',
         dialect:'mysql',
-        timezone: '+05:30',
+        // timezone: '+05:30',
     }
 )
 

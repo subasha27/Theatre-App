@@ -65,9 +65,11 @@ class UserController {
 
     async getList(req: Request, res: Response) {
         try {
-            const theatreId = req.body.theatreId
+        
+            const theatreId = req.params.theatreId
+            console.log(theatreId)
             const movieList = await SuperAdminMethods.getAll(Movies, {
-                where: { theatreId },
+                where: { theatreId:theatreId },
                 include: [
                     {
                         model: MoviePrices,
@@ -76,6 +78,7 @@ class UserController {
                     },
                 ],
             });
+            console.log(movieList)
             return res.status(200).send({ message: "Movie List", movieList })
         } catch (err) {
             console.error(err)
@@ -92,10 +95,14 @@ class UserController {
             const existingMovie = await SuperAdminMethods.findWithPk(Movies, bookingData.movieId);
             if (!existingMovie) return res.send({ message: "No Movie available" });
 
-            const existingBooking = await SuperAdminMethods.findOne(Booking, userId)
-            console.log(existingBooking)
+            const existingBooking = await SuperAdminMethods.getAll(Booking, {userId:userId})
+            let maxTicket=0;
+            for(const ticket of existingBooking){
+               maxTicket += Number(ticket.totalTicket)
+            }
+            
             const bookingLimit = await SuperAdminMethods.findOne(Theatres, existingMovie.theatreId)
-            if ((existingBooking) && existingBooking.totalTicket >= bookingLimit.bookingLimit) {
+            if ((existingBooking) && maxTicket >= bookingLimit.bookingLimit) {
                 return res.send({ message: "User Can book 6 ticket only" })
             }
 

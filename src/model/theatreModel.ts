@@ -1,5 +1,5 @@
 import sequelize from "../config/db"
-import { Sequelize, Model, DataTypes } from "sequelize";
+import { Sequelize, Model, DataTypes, INTEGER } from "sequelize";
 
 class Theatres extends Model {
     public id!: number;
@@ -9,6 +9,7 @@ class Theatres extends Model {
     public capacity!: number;
     public location!: string;
     public bookingLimit!: number;
+    public totalSesion!: number;
 }
 
 
@@ -42,6 +43,10 @@ Theatres.init({
     bookingLimit:{
         type:DataTypes.INTEGER,
         allowNull:false
+    },
+    totalSession:{
+        type:DataTypes.INTEGER,
+        allowNull:false
     }
 }, {
     sequelize,
@@ -56,7 +61,7 @@ class Movies extends Model {
     public screenName!: String;
     public movie!: String;
     public date!: Date;
-    public totalSession!: number;
+    public session!: Date;
     public totalSeats!: number;
     public availableSeats!: number;
     public budgetClassCapacity!: number;
@@ -89,8 +94,8 @@ Movies.init({
         type: DataTypes.DATE,
         allowNull: false
     },
-    totalSession: {
-        type: DataTypes.INTEGER,
+    session: {
+        type: DataTypes.DATE,
         allowNull: false
     },
     totalSeats: {

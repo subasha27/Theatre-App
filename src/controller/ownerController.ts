@@ -116,17 +116,14 @@ class OwnerCon {
 
 
                 if (existingData) {
-                    console.log(existingData)
                     if ((existingData.screenName == screenData.screenName) &&
                         (((new Date(existingData.date)).getTime()) == (new Date(screenData.date)).getTime()) &&
                         ((screenData.session).getTime() == (existingData.session).getTime())) {
-                        console.log(String(screenData.session), String(existingData.session))
                         return res.status(404).send({ message: `The screen is already defined for the session : ${screenData.session}` });
 
                     }
                     if (existingData.screenName != screenData.screenName) { 
                         if (sessionCount == 0 || sessionCount < theatreData.totalSession) {
-                            console.log("screenName not equal")
                             const ScreenCreation = await SuperAdminMethods.createUser(Movies, screenData);
                             const movieId = ScreenCreation.id
                             const priceData = {
@@ -144,8 +141,6 @@ class OwnerCon {
                     if (existingData.screenName == screenData.screenName &&
                         (((new Date(existingData.date)).getTime()) == (new Date(screenData.date)).getTime()) &&
                         ((screenData.session).getTime() != (existingData.session).getTime())) {
-                        console.log((screenData.session).getTime(), ".........",(existingData.session).getTime())
-                        console.log("session not equal")
                         const ScreenCreation = await SuperAdminMethods.createUser(Movies, screenData);
                         const movieId = ScreenCreation.id
                         const priceData = {
@@ -198,7 +193,6 @@ class OwnerCon {
             const currentDate = new Date();
             const twoDays = new Date(currentDate.getTime() + 2 * 24 * 60 * 60 * 1000);
             const providedDate = new Date(screenData.date);
-            console.log(twoDays, providedDate)
 
             if (providedDate < twoDays) {
                 return res.status(400).send({ message: "The movie cannot be updated before two days" });
@@ -207,7 +201,7 @@ class OwnerCon {
             if (!existingData) return res.status(404).send({ message: "Thers is no such screen Exists" });
 
             const updatedData = await SuperAdminMethods.update(Movies, { screenData }, { 'id': screenData.screenId }, 1)
-            console.log(updatedData, "check>>>>>>>>")
+           
             if (updatedData === 1) {
                 console.log('Update successful.');
                 return res.status(200).send({ message: "Movie Updated" })

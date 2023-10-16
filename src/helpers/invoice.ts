@@ -2,7 +2,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 
-async function generateAndSaveInvoice(bookingData: any, eachTicketPrice: { [ticketType: string]: number }, price: number): Promise<string> {
+async function generateAndSaveInvoice(bookingData: any, eachTicketPrice: { [ticketType: string]: number }, price: number, timings: Date): Promise<string> {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([400, 400]);
     const { width, height } = page.getSize();
@@ -86,6 +86,18 @@ async function generateAndSaveInvoice(bookingData: any, eachTicketPrice: { [tick
     y -= fontSize + 20;
     page.drawText(`Total Price: ${price}rs`, {
         x: columns[0].x,
+        y,
+        size: fontSize,
+        color: rgb(0, 0, 0),
+        font: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+    });
+
+
+    y -= fontSize + 40;
+    const newTimings = Number(timings.getTime()) - 19800000 
+    const formattedTimings = `${new Date(newTimings).toLocaleDateString()} ${new Date(newTimings).toLocaleTimeString()}`;
+    page.drawText(`Timings:${formattedTimings}`, {
+        x: columns[0].x = 25,
         y,
         size: fontSize,
         color: rgb(0, 0, 0),

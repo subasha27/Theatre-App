@@ -67,7 +67,6 @@ class UserController {
         try {
         
             const theatreId = req.params.theatreId
-            console.log(theatreId)
             const movieList = await SuperAdminMethods.getAll(Movies, {
                 where: { theatreId:theatreId },
                 include: [
@@ -78,7 +77,6 @@ class UserController {
                     },
                 ],
             });
-            console.log(movieList)
             return res.status(200).send({ message: "Movie List", movieList })
         } catch (err) {
             console.error(err)
@@ -211,7 +209,7 @@ class UserController {
             }
 
             const booked = await SuperAdminMethods.createUser(Booking, updatedBookingData)
-            await generateAndSaveInvoice(bookingData, eachTicketPrice, price)
+            await generateAndSaveInvoice(bookingData, eachTicketPrice, price,new Date(existingMovie.session))
                 .then((filepath) => {
                     console.log(`Invoice saved as: ${filepath}`);
                 })
@@ -232,7 +230,6 @@ class UserController {
     async cancellation(req: Request, res: Response) {
         try {
             const bookingId = req.params.id;
-            console.log(bookingId)
             const userId = (req as any).userId;
             const userEmail = (req as any).userEmail;
 
@@ -246,11 +243,9 @@ class UserController {
             const movieId = booking.movieId;
             const movie = await SuperAdminMethods.findWithPk(Movies, movieId);
             if (movie) {
-                console.log(">>", booking.tickets)
                 for (const data of booking.tickets) {
                     const ticketType = Object.keys(data)[0];
                     const quantity = data[ticketType];
-                    console.log(ticketType, quantity)
                     if (ticketType == 'budgetClass'){
                         ticketData["budgetClassCapacity"] = Number(quantity) + movie.budgetClassCapacity
                     }
@@ -262,7 +257,6 @@ class UserController {
                     }
                 }
                 const totalTicket = booking.totalTicket;
-                console.log(ticketData)
                 await SuperAdminMethods.update(Movies,ticketData,{ id: movieId })
                 await SuperAdminMethods.update(Movies,{availableSeats:(movie.availableSeats + booking.totalTicket)},{ id: movieId })
             }
